@@ -1,32 +1,36 @@
-(ns data-lang.core)
+(ns data-lang.core
+  (:use [clojure.tools.trace]))
 
-(defn- lookup-func-name [env name-to-find]
-  (if (= '+ name-to-find) name-to-find
-      (let [[id func-name] (first
-                            (filter (fn [[id func]] (= func name-to-find))
-                                    env))]
-        id)))
+(defn lookup-func-name [env name-to-find]
+  (if (some #(= (second %) name-to-find) env)
+        (let [[id func-name] (first
+                              (filter (fn [[id name]] (= name name-to-find))
+                                      env))]
+          id)
+        name-to-find))
+#_(lookup-func-name [[1 :a] [2 :b]] :c)
 
-(defn normalize [denorms env]
+(deftrace normalize [denorms env]
   (if (list? denorms) 
     ;; is Expr
     (let [func-name (first denorms)
           args (rest denorms)]
       (cond
        (= 'define func-name)
-       (let [[name & fargs] (first args)
+       (let [[name & params] (first args)
              id (gensym name)
+             params (map (fn [x] [(gensym x) x]) params)
              body (rest args)
              env (conj env [id name])
-             [body i-env] (map #(first (normalize % env)) body)]
-         [{:id id :function name :args fargs :body body}
+             [body i-env] (map #(first (normalize % (concat env params))) body)]
+         [{:id id :function name :args params :body body}
           env])
        :else
-       (let [[normed env] (map #(first (normalize % env)) args)]
-         [{:expr func-name #_(lookup-func-name env func-name) :args normed}
+       (let [normed-args (map #(first (normalize % env)) args)]
+         [{:expr (lookup-func-name env func-name) :args normed-args}
           env])))
     ;; if primitive...
-    [denorms env]))
+    [(lookup-func-name env denorms) env]))
 
 (defn normalize-all [denorm-list]
   (loop [cur (first denorm-list)
@@ -63,13 +67,10 @@
     (cond
      ;; function define
      (contains? norms :function)
-     (let [func (:function norms)
-           args (:args norms)
-           id (:id norms)
-           body (:body norms)
-           env (conj env [id func])
+     (let [{:keys [function args id body]} norms
+           env (conj env [id function])
            [denorm-body inner-env] (map #(first (denormalize % env)) body)]
-       [`(~'define (~func ~@args) ~denorm-body)
+       [`(~'define (~function ~@args) ~denorm-body)
         env])
      (contains? norms :expr)
      (let [expr (lookup-func env (:expr norms))
