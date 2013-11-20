@@ -1,53 +1,45 @@
 (ns data-lang.core)
 
-(defn make-stmts []
-  [{:fn-id 2 :arg1 2 :arg2 2}
-   {:fn-id 1 :arg1 1 :arg2 1}])
+(defn- lookup-func-name [env name-to-find]
+  (if (= '+ name-to-find) name-to-find
+      (let [[id func-name] (first
+                            (filter (fn [[id func]] (= func name-to-find))
+                                    env))]
+        id)))
 
-(defn make-fns []
-  [{:fn-id 1 :map 'map}
-   {:fn-id 1 :map '+}])
-
-(defn lookup-fn [id fns]
-  (:map (first (filter #(= id (:fn-id %)) fns))))
-
-(defn foo [stmts fns]
-  (map
-   (fn [x]
-     (list (lookup-fn (:fn-id x) fns)
-           (:arg1 x)
-           (:arg2 x)))
-   stmts))
-
-(foo (make-stmts) (make-fns))
-
-
-(defn mapper [fnk x]
-  (defn inner [vals]
-    (if (empty? vals) '()
-        (conj (inner (rest vals))
-              (fnk (first vals)))))
-  (inner x))
-
-(mapper (fn [z] (+ z 1)) [1 2 3 4 5]) 
-
-(defn normalize [denorms]
+(defn normalize [denorms env]
   (if (list? denorms) 
     ;; is Expr
-    (let [func (first denorms)
+    (let [func-name (first denorms)
           args (rest denorms)]
       (cond
-       (= 'define func)
+       (= 'define func-name)
        (let [[name & fargs] (first args)
-             body (rest args)]
-         {:function name :args fargs :body (map normalize body)})
-       (= '+ func) {:expr '+ :args (map normalize args)}
-       :else {:expr func :args (map normalize args)}))
+             id (gensym name)
+             body (rest args)
+             env (conj env [id name])
+             [body i-env] (map #(first (normalize % env)) body)]
+         [{:id id :function name :args fargs :body body}
+          env])
+       :else
+       (let [[normed env] (map #(first (normalize % env)) args)]
+         [{:expr func-name #_(lookup-func-name env func-name) :args normed}
+          env])))
     ;; if primitive...
-    denorms))
+    [denorms env]))
 
 (defn normalize-all [denorm-list]
-  (map normalize denorm-list))
+  (loop [cur (first denorm-list)
+         next (rest denorm-list)
+         env []
+         ret []]
+    (let [[normed env] (normalize cur env)
+          ret (conj ret normed)]
+      (if (empty? next) ret
+          (recur (first next)
+                 (rest next)
+                 env
+                 ret)))))
 
 (normalize-all
  '(
@@ -55,6 +47,7 @@
      (+ x y))
    (adder 1 2)
    ))
+
 
 (defn- lookup-func [env id-to-find]
   (if (number? id-to-find)
