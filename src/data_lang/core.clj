@@ -22,7 +22,7 @@
              params (map (fn [x] [(gensym x) x]) params)
              body (rest args)
              env (conj env [id name])
-             [body i-env] (map #(first (normalize % (concat env params))) body)]
+             body (map #(first (normalize % (concat env params))) body)]
          [{:id id :function name :args params :body body}
           env])
        :else
@@ -46,22 +46,21 @@
                  ret)))))
 
 (normalize-all
- '(
-   (define (adder x y)
-     (+ x y))
-   (adder 1 2)
-   ))
+    '(
+      (define (adder x y)
+        (+ x y))
+      (adder 1 2)
+      ))
 
-
-(defn- lookup-func [env id-to-find]
-  (if (number? id-to-find)
+(deftrace lookup-func [env id-to-find]
+  (if (some #(= (first %) id-to-find) env)
     (let [[id func-name] (first
                      (filter (fn [[id func]] (= id id-to-find))
                              env))]
       func-name)
     id-to-find))
 
-(defn- denormalize [norms env]
+(deftrace denormalize [norms env]
   (if (map? norms) 
     ;; is Expr
     (cond
@@ -69,16 +68,17 @@
      (contains? norms :function)
      (let [{:keys [function args id body]} norms
            env (conj env [id function])
-           [denorm-body inner-env] (map #(first (denormalize % env)) body)]
-       [`(~'define (~function ~@args) ~denorm-body)
+           arg-names (map second args)
+           [denorm-body inner-env] (map #(first (denormalize % (concat env args))) body)]
+       [`(~'define (~function ~@arg-names) ~denorm-body)
         env])
      (contains? norms :expr)
      (let [expr (lookup-func env (:expr norms))
-           args (:args norms)]
+           args (map #(lookup-func env %) (:args norms))]
        [`(~expr ~@args)
         env]))
     ;; if primitive...
-    norms))
+    [(lookup-func env norms) env]))
 
 
 (defn denormalize-all [norm-list]
@@ -94,8 +94,10 @@
                  env
                  ret)))))
 
-(denormalize-all '({:id 1 :function adder, :args (x y), :body ({:expr +, :args (x y)})}
-                   {:expr 1, :args (1 2)}))
+#_(denormalize-all
+ '[{:id 11, :function adder, :args ([22 x] [33 y]),
+    :body ({:expr +, :args (22 33)})}
+   {:expr 11, :args (1 2)}])
 
 
 

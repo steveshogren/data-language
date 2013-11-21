@@ -5,16 +5,16 @@
 (deftest normalize-test
   (testing "Normalize function"
     (is (=
-         (with-redefs [gensym (fn [x] 'test)]
+         (with-redefs [gensym (fn [x] (symbol (str x "X")))]
            (normalize-all
             '((define (adder x y)
                 (+ x y))
               (adder 1 2))))
-         '[{:id test, :function adder, :args ([test x] [test y]), :body {:expr +, :args (test test)}} {:expr test, :args (1 2)}]
+         '[{:id adderX, :function adder, :args ([xX x] [yX y]), :body ({:expr +, :args (xX yX)})} {:expr adderX, :args (1 2)}]
            ))
     (is (=
-         (denormalize-all '({:id 1 :function adder, :args (x y), :body ({:expr +, :args (x y)})}
-                            {:expr 1, :args (1 2)}))
+         (denormalize-all
+          '[{:id adderX, :function adder, :args ([xX x] [yX y]), :body ({:expr +, :args (xX yX)})} {:expr adderX, :args (1 2)}])
          '[(define (adder x y) (+ x y)) (adder 1 2)]
            ))))
 
