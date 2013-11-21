@@ -2,15 +2,18 @@
   (:use [clojure.tools.trace]))
 
 (defn lookup-func-name [env name-to-find]
-  (if (some #(= (second %) name-to-find) env)
+  (cond (some #(= (second %) name-to-find) env)
         (let [[id func-name] (first
                               (filter (fn [[id name]] (= name name-to-find))
                                       env))]
           id)
-        name-to-find))
-#_(lookup-func-name [[1 :a] [2 :b]] :c)
+        (or (number? name-to-find)
+            (some #(= name-to-find %) ['+ '-]))
+        name-to-find
+        :else (symbol (str name-to-find "UNBOUND" ))))
 
-(deftrace normalize [denorms env]
+
+(defn normalize [denorms env]
   (if (list? denorms) 
     ;; is Expr
     (let [func-name (first denorms)
@@ -19,7 +22,7 @@
        (= 'define func-name)
        (let [[name & params] (first args)
              id (gensym name)
-             params (map (fn [x] [(gensym x) x]) params)
+             params (map (fn [x] [(gensym (str name "." x)) x]) params)
              body (rest args)
              env (conj env [id name])
              body (map #(first (normalize % (concat env params))) body)]
@@ -45,14 +48,19 @@
                  env
                  ret)))))
 
-(normalize-all
+
+#_(denormalize-all
+  (normalize-all
     '(
       (define (adder x y)
         (+ x y))
-      (adder 1 2)
-      ))
+      (adder 1 (+ 1 1))
+      (define (subtracter x y)
+        (- x y))
+      (adder 1 (subtracter 3 1))
+      )))
 
-(deftrace lookup-func [env id-to-find]
+(defn lookup-func [env id-to-find]
   (if (some #(= (first %) id-to-find) env)
     (let [[id func-name] (first
                      (filter (fn [[id func]] (= id id-to-find))
@@ -60,7 +68,7 @@
       func-name)
     id-to-find))
 
-(deftrace denormalize [norms env]
+(defn denormalize [norms env]
   (if (map? norms) 
     ;; is Expr
     (cond
@@ -74,7 +82,7 @@
         env])
      (contains? norms :expr)
      (let [expr (lookup-func env (:expr norms))
-           args (map #(lookup-func env %) (:args norms))]
+           args (map #(first (denormalize % env)) (:args norms))]
        [`(~expr ~@args)
         env]))
     ;; if primitive...
@@ -94,10 +102,10 @@
                  env
                  ret)))))
 
-#_(denormalize-all
- '[{:id 11, :function adder, :args ([22 x] [33 y]),
-    :body ({:expr +, :args (22 33)})}
-   {:expr 11, :args (1 2)}])
+(denormalize-all
+   '[{:id adder2838, :function adder, :args ([x2839 x] [y2840 y]), :body ({:expr +, :args (x2839 y2840)})}
+     {:expr adder2838, :args (1 {:expr +, :args (1 1)})}])
+
 
 
 
