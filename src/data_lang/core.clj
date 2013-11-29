@@ -7,18 +7,20 @@
                               (filter (fn [[id name]] (= name name name-to-find))
                                       env))]
           id)
-        (or (number? name-to-find)
-            (some #(= name-to-find %) ['+ '-]))
-        name-to-find
+        (number? name-to-find) name-to-find
         :else (symbol (str name-to-find "UNBOUND"))))
-
 ;;(lookup-by-name '([adder1631 adder] [adder.x1632 x] [adder.y1633 y]) 'y)
 
-(defn add-fn-to-env [env id name]
-  (conj env [id name]))
+(defn lookup-param-count [env name-to-find]
+  (let [[_ _ param-count]
+        (first (filter (fn [[_ name]] (= name name name-to-find)) env))]
+    param-count))
+
+(defn add-fn-to-env [env id name params]
+  (conj env [id name (count params)]))
 
 (defn add-params-to-env [env params]
-  (let [params (map (fn [{:keys [id name]}] [id name]) params)]
+  (let [params (map (fn [{:keys [id name]}] [id name 0]) params)]
     (concat env params)))
 
 (defn make-fn [id name params body]
@@ -38,32 +40,46 @@
        (let [[name & params] (first args)
              id (gensym name)
              params (map #(make-param name %) params)
-             env (add-fn-to-env env id name)
+             env (add-fn-to-env env id name params)
              body (map #(first (normalize % (add-params-to-env env params)))
                        (rest args))]
          [(make-fn id name params body) env])
        :else
-       (let [normed-args (map #(first (normalize % env)) args)]
-         [{:expr (lookup-by-name env func-name) :args normed-args}
+       (let [normed-args (map #(first (normalize % env)) args)
+             actual-arg-count (count normed-args)
+             expected-arg-count (lookup-param-count env func-name)
+             arg-error (cond 
+                        ;; When looking up library calls, temporary
+                        (nil? expected-arg-count) []
+                        (< actual-arg-count expected-arg-count) [:MISSING-ARGS]
+                        (> actual-arg-count expected-arg-count) [:TOO-MANY-ARGS]
+                        :else [])]
+         [{:expr (lookup-by-name env func-name) :args (concat normed-args arg-error)}
           env])))
     ;; if primitive...
     [(lookup-by-name env denorms) env]))
-
 
 #_(denormalize-all)
 (normalize-all
    '(
      (define (adder x y)
        (+ x y))
-     (adder)
+     (define (adder y)
+       (+ y))
+     (adder 1)
     ))
+#_(normalize-all
+ '(
+   (+ 1 1)
+     ))
 
 (defn normalize-all [denorm-list]
   (loop [cur (first denorm-list)
          next (rest denorm-list)
-         env '()
+         env '([lang.+ + 2]
+               [lang.- - 2])
          ret []]
-    (let [[normed env] (normalize cur env)
+    (let [[normed env] #_(trace "pout") (normalize cur env)
           ret (conj ret normed)]
       (if (empty? next) ret
           (recur (first next)
