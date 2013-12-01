@@ -1,5 +1,11 @@
 (ns data-lang.io
-  (:require [clojure.edn :as r]))
+  (:require [clojure.edn :as r]
+            clojure.pprint
+            [clojure.java.io :as jio]))
+
+(defn- safe-read [s]
+  (binding [*read-eval* false]
+    (read-string s)))
 
 (defn read-edn [filename]
   (with-open [infile (java.io.PushbackReader. (clojure.java.io/reader filename))]
@@ -12,9 +18,15 @@
     (.write w (pr-str d))))
 
 (defn read-data [filename]
-  (slurp filename))
+  (safe-read (str "[" (slurp filename) "]")))
 
 (defn write-data [d filename]
-  (with-open [w (clojure.java.io/writer filename :append false)]
-    (.write w (str d))))
+  (do
+    (jio/delete-file filename)
+    (with-open [w (jio/writer filename :append true)]
+      (loop [cur (first d)
+             res (rest d)]
+          (if (nil? cur) nil
+              (do (with-pprint-dispatch code-dispatch (pprint cur w))
+                  (recur (first res) (rest res))))))))
 

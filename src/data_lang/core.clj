@@ -10,14 +10,13 @@
       [scheme.- - 2]))
 
 (defn round-trip [filename]
-  (let [denorm-input (trace "data" (read-string (io/read-data filename)))
-        normalized (n/normalize-all denorm-input language-mappings)
-        denormalized (d/denormalize-all normalized language-mappings)]
+  (let [denorm-input  (io/read-data filename)
+        normalized (n/normalize-all denorm-input language-mappings)]
     (do 
       (io/write-edn normalized "test.edn")
-      (io/write-data denormalized filename))))
-
-#_(read-string  "(define (test x y) (+ x y))")
+      (let [norm-from-store (io/read-edn "test.edn")
+            denormalized (d/denormalize-all norm-from-store language-mappings)]
+        (io/write-data denormalized filename)))))
 
 (round-trip "test.rkt")
 
