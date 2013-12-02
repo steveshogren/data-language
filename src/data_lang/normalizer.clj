@@ -29,14 +29,6 @@
     ;; if primitive...
     [(h/lookup-by-name env denorms) env]))
 
-#_(denormalize-all
- (normalize-all
-    '(
-      (define (adder x y)
-        (+ x y))
-      (adder 1 2)
-    )))
-
 (defn normalize-all [denorm-list language-mappings]
   (loop [cur (first denorm-list)
          next (rest denorm-list)

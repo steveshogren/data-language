@@ -12,14 +12,21 @@
 (def store-name "test.edn")
 (def filename "test.rkt")
 
+(defn display [] 
+  (let [norm-from-store (io/read-edn store-name)
+        [denormalized _] (d/denormalize-all norm-from-store language-mappings)]
+    (io/write-code denormalized filename)))
+
+#_(defn display-p [] (display pythond/denormalize-all))
+
+(defn save []
+  (let [denorm-input (io/read-code filename)
+        [normalized _] (n/normalize-all denorm-input language-mappings)]
+    (io/write-edn normalized store-name)))
+
 (defn round-trip []
-  (let [denorm-input  (io/read-data filename)
-        normalized (n/normalize-all denorm-input language-mappings)]
-    (do 
-      (io/write-edn normalized store-name)
-      (let [norm-from-store (io/read-edn store-name)
-            denormalized (d/denormalize-all norm-from-store language-mappings)]
-        (io/write-data denormalized filename)))))
+  (do (save)
+      (display)))
 
 (defn renam [data name new-name]
   (map
@@ -32,12 +39,18 @@
 (defn rename-global-symbol [name new-name]
   (let [data (io/read-edn store-name)
         data (renam data name new-name)
-        denormalized (d/denormalize-all data language-mappings)]
+        [denormalized _] (d/denormalize-all data language-mappings)]
     (do
       (io/write-edn data store-name)
-      (io/write-data denormalized filename))))
+      (io/write-code denormalized filename))))
 
 (defn -main
-  [filename & args]
-  (round-trip filename))
+  [& args]
+  (round-trip)
+  #_(loop [x 1]
+    (let [inp (read-line)]
+      (if (= "y" inp)
+        (do (round-trip)
+            (recur 1))
+        nil))))
 

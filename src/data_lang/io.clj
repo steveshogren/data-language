@@ -1,4 +1,5 @@
 (ns data-lang.io
+  (:use clojure.pprint)
   (:require [clojure.edn :as r]
             clojure.pprint
             [clojure.java.io :as jio]))
@@ -14,13 +15,15 @@
         (first edn-seq)))))
 
 (defn write-edn [d filename]
-  (with-open [w (clojure.java.io/writer filename :append false)]
-    (.write w (pr-str d))))
+  (do
+    (jio/delete-file filename)
+    (with-open [w (clojure.java.io/writer filename :append false)]
+      (.write w (pr-str d)))))
 
-(defn read-data [filename]
+(defn read-code [filename]
   (safe-read (str "[" (slurp filename) "]")))
 
-(defn write-data [d filename]
+(defn write-code [d filename]
   (do
     (jio/delete-file filename)
     (with-open [w (jio/writer filename :append true)]
