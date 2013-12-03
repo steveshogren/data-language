@@ -1,6 +1,9 @@
 (ns data-lang.normalizer
   (:require [data-lang.helpers :as h]))
 
+(def missing :MISSING-ARGS)
+(def too-many :TOO-MANY-ARGS)
+
 (defn normalize [denorms env]
   (if (h/expr? denorms) 
     (let [func-name (first denorms)
@@ -27,7 +30,10 @@
          [{:expr (h/lookup-by-name env func-name) :args (concat normed-args arg-error)}
           env])))
     ;; if primitive...
-    [(h/lookup-by-name env denorms) env]))
+    (if (or (= missing denorms)
+            (= too-many denorms))
+      ["" env]
+      [(h/lookup-by-name env denorms) env])))
 
 (defn normalize-all [denorm-list language-mappings]
   (loop [cur (first denorm-list)

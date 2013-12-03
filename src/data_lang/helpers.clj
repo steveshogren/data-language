@@ -1,13 +1,18 @@
 (ns data-lang.helpers)
 
 (defn lookup-by-name [env name-to-find]
-  (cond (some #(= (second %) name-to-find) env)
-        (let [[id func-name] (first
-                              (filter (fn [[id name]] (= name name name-to-find))
-                                      env))]
-          id)
-        (number? name-to-find) name-to-find
-        :else (symbol (str name-to-find "-UNBOUND"))))
+  (let [unbound "-UNBOUND"
+        name-to-find (if (number? name-to-find)
+                       name-to-find
+                       (symbol (clojure.string/replace name-to-find unbound "")))]
+    (cond (some #(= (second %) name-to-find) env)
+          (let [[id func-name] (first
+                                (filter (fn [[id name]] (= name name name-to-find))
+                                        env))]
+            id)
+          (number? name-to-find) name-to-find
+          :else (symbol (str name-to-find unbound)))))
+
 
 (defn lookup-param-count [env name-to-find]
   (let [[_ _ param-count]
