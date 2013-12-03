@@ -1,23 +1,28 @@
 (ns data-lang.core
   (:use clojure.tools.trace)
   (:require [data-lang.denormalizer :as d]
+            [data-lang.python-denormalizer :as pythond]
             [data-lang.normalizer :as n]
             [data-lang.io :as io])
   (:gen-class))
 
 (def language-mappings
   '([scheme.+ + 2]
+      [scheme.print print 1]
       [scheme.- - 2]))
 
 (def store-name "test.edn")
 (def filename "test.rkt")
 
-(defn display [] 
-  (let [norm-from-store (io/read-edn store-name)
-        [denormalized _] (d/denormalize-all norm-from-store language-mappings)]
-    (io/write-code denormalized filename)))
+(defn display  
+  ([] (display d/denormalize-all)) 
+  ([denormer] 
+     (let [norm-from-store (io/read-edn store-name)
+           [denormalized _] (denormer norm-from-store language-mappings)]
+       (io/write-code denormalized filename))))
 
 #_(defn display-p [] (display pythond/denormalize-all))
+#_(display-p)
 
 (defn save []
   (let [denorm-input (io/read-code filename)
@@ -46,8 +51,8 @@
 
 (defn -main
   [& args]
-  (round-trip)
-  #_(loop [x 1]
+  #_(round-trip)
+  (loop [x 1]
     (let [inp (read-line)]
       (if (= "y" inp)
         (do (round-trip)
