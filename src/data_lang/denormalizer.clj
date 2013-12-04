@@ -11,7 +11,7 @@
            env (h/add-fn-to-env env id function)
            arg-names (map :name params)
            [denorm-body inner-env] (map #(first (denormalize % (h/add-params-to-env env params))) body)]
-       [`(~'define (~function ~@arg-names) ~denorm-body)
+       [`(~'defn ~function [~@arg-names] ~denorm-body)
         env])
      (contains? norms :expr)
      (let [expr (h/lookup-func env (:expr norms))
