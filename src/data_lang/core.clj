@@ -6,12 +6,14 @@
             [data-lang.io :as io])
   (:gen-class))
 
+;; Trying to come up with a storage format that allows
+;; multiple signatures
 (def language-mappings
-  '([clojure.+ + 2]
-      [clojure.print print 1]
-      [clojure.if if 3]
-      [clojure.equal = 2]
-      [clojure.- - 2]))
+  '([clojure.+ + [[&]]]
+      [clojure.print print [[&]]]
+      [clojure.if if [[2] [3]]]
+      [clojure.equal = [[&]]]
+      [clojure.- - [[&]]]))
 
 (def store-name "test.edn")
 (def filename "test.clj")

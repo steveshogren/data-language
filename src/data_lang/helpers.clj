@@ -20,8 +20,8 @@
     param-count))
 
 (defn add-fn-to-env
-  ([env id name] (add-fn-to-env env id name []))
-  ([env id name params] (conj env [id name (count params)])))
+  ([env id name] (add-fn-to-env env id name [[]]))
+  ([env id name params] (conj env [id name [[(count params)]]])))
 
 (defn add-params-to-env [env params]
   (let [params (map (fn [{:keys [id name]}] [id name 0]) params)]
