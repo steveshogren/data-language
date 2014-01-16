@@ -56,19 +56,20 @@
         (let [cmd (read-line)
               [cmd & args] (clojure.string/split cmd #" ")]
           (cond
-           (or  (= "s" cmd)
-                (= "save" cmd))
+           (or  (= "h" cmd) (= "help" cmd))
+           (do (println "s causes a save-rewrite, r old new")
+               (recur 1))
+           (or  (= "s" cmd) (= "save" cmd))
            (do (round-trip)
                (println "Written..")
                (recur 1))
-           (or (= "r" cmd)
-               (= "rename" cmd))
+           (or (= "r" cmd) (= "rename" cmd))
            (do (rename-global-symbol (symbol (first args))
                                      (symbol (second args)))
                (println "Written..")
                (recur 1))
            (= "q" cmd) nil
-           :else (do (println "Invalid command: try 's' or 'r'")
+           :else (do (println "Invalid command: try 's' or 'r old new'")
                      (recur 1)))))))
                
 
