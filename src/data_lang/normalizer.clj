@@ -1,5 +1,4 @@
 (ns data-lang.normalizer
-  (:use [clojure.tools.trace])
   (:require [data-lang.helpers :as h]))
 
 (def missing :MISSING-ARGS)
@@ -47,17 +46,7 @@
     ;; if primitive...
     [(h/lookup-by-name env denorms) env]))
 
-;; [&] - 0 to many
-;; [1 &] - 1 to many
-;; [1] - just one
-;; [1] [2] - one or two
-(defn has-zero-to-many? [expected-arg-counts]
-  (reduce #(or %1 (= '& (trace (first %2)))) :false expected-arg-counts))
-
-(has-zero-to-many? '[[&]])
-
 (defn detect-arg-errors [expected-arg-counts actual-arg-count]
-  (let [hasMany? (some )])
   (cond 
    ;; When looking up library calls, temporary
    (nil? expected-arg-count) []
