@@ -39,20 +39,17 @@
                                            (not= missing %))
                                       args))
              actual-arg-count (count normed-args)
-             expected-arg-counts (h/lookup-param-count env func-name)
-             arg-error (detect-arg-errors expected-arg-counts actual-arg-count)]
+             expected-arg-count (h/lookup-param-count env func-name)
+             arg-error (cond 
+                        ;; When looking up library calls, temporary
+                        (nil? expected-arg-count) []
+                        (< actual-arg-count expected-arg-count) [missing]
+                        (> actual-arg-count expected-arg-count) [too-many]
+                        :else [])]
          [{:expr (h/lookup-by-name env func-name) :args (concat normed-args arg-error)}
           env])))
     ;; if primitive...
     [(h/lookup-by-name env denorms) env]))
-
-(defn detect-arg-errors [expected-arg-counts actual-arg-count]
-  (cond 
-   ;; When looking up library calls, temporary
-   (nil? expected-arg-count) []
-   (< actual-arg-count expected-arg-counts) [missing]
-   (> actual-arg-count expected-arg-counts) [too-many]
-   :else []))
 
 (defn normalize-all [denorm-list language-mappings]
   (loop [cur (first denorm-list)
