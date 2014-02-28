@@ -57,7 +57,8 @@
               [cmd & args] (clojure.string/split cmd #" ")]
           (cond
            (or  (= "h" cmd) (= "help" cmd))
-           (do (println "s causes a save-rewrite, r old new")
+           (do (println "s - run a save-rewrite")
+               (println "r old new - rename a user-defined symbol from old to new")
                (recur 1))
            (or  (= "s" cmd) (= "save" cmd))
            (do (round-trip)
@@ -69,7 +70,7 @@
                (println "Written..")
                (recur 1))
            (= "q" cmd) nil
-           :else (do (println "Invalid command: try 's' or 'r old new'")
+           :else (do (println "Invalid command - 'h' for help")
                      (recur 1)))))))
                
 
