@@ -13,8 +13,8 @@
       [clojure.equal = 2]
       [clojure.- - 2]))
 
-(def store-name "test.edn")
-(def filename "test.clj")
+(def store-name "test-data/test.edn")
+(def filename "test-data/test.clj")
 
 (defn display  
   ([] (display d/denormalize-all)) 
