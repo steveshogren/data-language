@@ -33,6 +33,8 @@ data-lang.core/language-mappings
            '[(defn adder [x y] (+ x y)) (adder 1 2)]))
     (is (= (round '[(defn adder [x y] (+ x y)) (adder 1 2)])
            '[(defn adder [x y] (+ x y)) (adder 1 2)]))
+    (is (= (denorm (rename-in-edn sample-edn 'adder 'adder2))
+           '[(defn adder2 [x y] (+ x y)) (adder2 1 2)]))
     ))
 
 

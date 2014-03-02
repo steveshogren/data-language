@@ -32,17 +32,16 @@
   (do (save)
       (display)))
 
-(defn renam [data name new-name]
-  (map
-   #(if (and (contains? % :function)
-             (= name (:function %)))
-      (assoc % :function new-name)
-      %)
-   data))
+(defn rename-in-edn [data name new-name]
+  (map #(if (and (contains? % :function)
+                 (= name (:function %)))
+          (assoc % :function new-name)
+          %)
+       data))
 
 (defn rename-global-symbol [name new-name]
   (let [data (io/read-edn store-name)
-        data (renam data name new-name)
+        data (rename-in-edn data name new-name)
         [denormalized _] (d/denormalize-all data language-mappings)]
     (do
       (io/write-edn data store-name)
