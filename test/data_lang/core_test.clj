@@ -1,30 +1,42 @@
 (ns data-lang.core-test
   (:require [clojure.test :refer :all]
+            [data-lang.normalizer :as n]
+            [data-lang.denormalizer :as d]
             [data-lang.core :refer :all]))
+
+data-lang.core/language-mappings
+
+(defn round [code]
+  (let [[normed _] (n/normalize-all code data-lang.core/language-mappings)
+        [denormed _] (d/denormalize-all normed data-lang.core/language-mappings)]
+    denormed))
+(defn denorm [edn]
+  (let [[denormed _] (d/denormalize-all edn data-lang.core/language-mappings)]
+    denormed))
+(defn norm [code]
+  (let [[normed _] (n/normalize-all code data-lang.core/language-mappings)]
+    normed))
 
 (deftest normalize-test
   (testing "Normalize function"
     (is (=
          (with-redefs [gensym (fn [x] (symbol (str x "X")))]
-           (normalize-all
-            '((define (adder x y)
-                (+ x y))
-              (adder 1 2))))
-         '[{:id adderX, :function adder, :args ([xX x] [yX y]), :body ({:expr +, :args (xX yX)})} {:expr adderX, :args (1 2)}]
+           (norm '((defn adder [x y]
+                     (+ x y))
+                   (adder 1 2))))
+         '[{:id adderX, :function adder, :params ({:id adder.xX, :name x} {:id adder.yX, :name y}), :body ({:expr clojure.+, :args (adder.xX adder.yX)})} {:expr adderX, :args (1 2)}]
            ))
-    (is (=
-         (denormalize-all
-          '[{:id adderX, :function adder, :args ([xX x] [yX y]), :body ({:expr +, :args (xX yX)})} {:expr adderX, :args (1 2)}])
-         '[(define (adder x y) (+ x y)) (adder 1 2)]
-         ))
-    (is (=
-         (denormalize-all
-          (normalize-all
-           '[(define (adder x y) (+ x y)) (adder 1 2)]))
-         '[(define (adder x y) (+ x y)) (adder 1 2)]
-         ))
 
+    (is (=
+           (denorm '[{:id adderX, :function adder, :params ({:id adder.xX, :name x} {:id adder.yX, :name y}), :body ({:expr clojure.+, :args (adder.xX adder.yX)})} {:expr adderX, :args (1 2)}])
+           '[(defn adder [x y] (+ x y)) (adder 1 2)]
+         ))
+    (is (=
+         (round '[(defn adder [x y] (+ x y)) (adder 1 2)])
+         '[(defn adder [x y] (+ x y)) (adder 1 2)]
+         ))
     ))
+
 
 
 
