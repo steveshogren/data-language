@@ -8,8 +8,11 @@
                        (symbol (clojure.string/replace name-to-find unbound "")))]
     (if (number? name-to-find) name-to-find
         (let [match? (filter (fn [[id name _ ns]]
-                               (and (= ns ns-to-find)
-                                    (= name name-to-find)))
+                               (or (and (= ns ns-to-find)
+                                        (= name name-to-find))
+                                   ;; also "blanket" check for core defs
+                                   (and (= 'core ns)
+                                        (= name name-to-find))))
                              env)]
           (if (seq match?)
             (first (first match?))

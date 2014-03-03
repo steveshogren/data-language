@@ -6,11 +6,11 @@
 
 
 (def new-language-mappings
-  '([clojure.+ + 2 test]
-      [clojure.print print 1 test]
-      [clojure.if if 3 test]
-      [clojure.equal = 2 test]
-      [clojure.- - 2 test]))
+  '([clojure.+ + 2 core]
+      [clojure.print print 1 core]
+      [clojure.if if 3 core]
+      [clojure.equal = 2 core]
+      [clojure.- - 2 core]))
 
 (defn round [code]
   (let [[normed _] (n/normalize-all code new-language-mappings)
@@ -39,8 +39,8 @@
     (is (= (denorm (rename-in-edn sample-edn 'adder 'adder2))
            '[(ns test) (defn adder2 [x y] (+ x y)) (adder2 1 2)])))
   (testing "Round tripping"
-    (is (= (round '[(defn adder [x y] (+ x y)) (adder 1 2)])
-           '[(defn adder [x y] (+ x y)) (adder 1 2)]))
+    (is (= (round '[(ns test) (defn adder [x y] (+ x y)) (adder 1 2)])
+           '[(ns test) (defn adder [x y] (+ x y)) (adder 1 2)]))
     (is (= (round '[(ns test.testns (:require [blah]))
                     (defn adder2 [x y] (+ x y)) (adder2 1 2)] )
        '[(ns test.testns (:require [blah]))
