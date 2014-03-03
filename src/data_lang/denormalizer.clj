@@ -7,10 +7,10 @@
     (cond
      ;; function define
      (contains? norms :function)
-     (let [{:keys [function params id body]} norms
-           env (h/add-fn-to-env env id function)
+     (let [{:keys [function params id body ns]} norms
+           env (h/add-fn-to-env env id function ns)
            arg-names (map :name params)
-           [denorm-body inner-env] (map #(first (denormalize % (h/add-params-to-env env params))) body)]
+           [denorm-body inner-env] (map #(first (denormalize % (h/add-params-to-env env params ns))) body)]
        [`(~'defn ~function [~@arg-names] ~denorm-body)
         env])
      (contains? norms :expr)
