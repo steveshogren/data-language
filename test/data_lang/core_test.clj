@@ -24,7 +24,8 @@
     normed))
 
 (def sample-edn
-  '[{:id adderX,
+  '[{:ns test :args nil}
+    {:id adderX,
      :function adder,
      :params ({:id adder.xX, :name x} {:id adder.yX, :name y}),
      :body ({:expr clojure.+, :args (adder.xX adder.yX)})
@@ -34,9 +35,9 @@
 (deftest normalize-test
   (testing "Denormalizing"
     (is (= (denorm sample-edn)
-           '[(defn adder [x y] (+ x y)) (adder 1 2)]))
+           '[(ns test) (defn adder [x y] (+ x y)) (adder 1 2)]))
     (is (= (denorm (rename-in-edn sample-edn 'adder 'adder2))
-           '[(defn adder2 [x y] (+ x y)) (adder2 1 2)])))
+           '[(ns test) (defn adder2 [x y] (+ x y)) (adder2 1 2)])))
   (testing "Round tripping"
     (is (= (round '[(defn adder [x y] (+ x y)) (adder 1 2)])
            '[(defn adder [x y] (+ x y)) (adder 1 2)]))
@@ -46,7 +47,7 @@
          (defn adder2 [x y] (+ x y)) (adder2 1 2)])))
   (testing "Renaming"
     (is (= (denorm (rename-in-edn sample-edn 'adder 'adder2))
-           '[(defn adder2 [x y] (+ x y)) (adder2 1 2)])))
+           '[(ns test) (defn adder2 [x y] (+ x y)) (adder2 1 2)])))
   (testing "Normalizing"
     (is (= (with-redefs [gensym (fn [x] (symbol (str x "X")))]
              (norm '((ns test) (defn adder [x y] (+ x y)) (adder 1 2))))

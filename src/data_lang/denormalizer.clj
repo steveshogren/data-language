@@ -13,6 +13,10 @@
            [denorm-body inner-env] (map #(first (denormalize % (h/add-params-to-env env params ns))) body)]
        [`(~'defn ~function [~@arg-names] ~denorm-body)
         env])
+     (contains? norms :ns)
+     (let [nsname (:ns norms)
+           args (:args norms)]
+       [`(~'ns ~nsname ~@args) env])
      (contains? norms :expr)
      (let [expr (h/lookup-func env (:expr norms))
            args (map #(first (denormalize % env)) (:args norms))]

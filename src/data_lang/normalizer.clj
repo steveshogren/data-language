@@ -42,15 +42,16 @@
 
 (defn norm-ns [denorm-list]
   (if (= 'ns (first (first denorm-list)))
-    [(second (first denorm-list)) (rest denorm-list)]
-    ['user denorm-list]))
+    (let [[_ ns & args] (first denorm-list)]
+      [[ns args] (rest denorm-list)])
+    [['user '()] denorm-list]))
 
 (defn normalize-all [denorm-list language-mappings]
-  (let [[ns denorm-list] (norm-ns denorm-list)]
+  (let [[[ns args] denorm-list] (norm-ns denorm-list)]
     (loop [cur (first denorm-list)
            next (rest denorm-list)
            env language-mappings
-           ret []]
+           ret [{:ns ns :args args}]]
       (let [[normed env] (normalize cur env ns)
             ret (conj ret normed)]
         (if (empty? next)
