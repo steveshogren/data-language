@@ -32,16 +32,17 @@
   (do (save)
       (display)))
 
-(defn rename-in-edn [data name new-name]
+(defn rename-in-edn [data name ns new-name]
   (map #(if (and (contains? % :function)
+                 (= ns (:ns %))
                  (= name (:function %)))
           (assoc % :function new-name)
           %)
        data))
 
-(defn rename-global-symbol [name new-name]
+(defn rename-global-symbol [name ns new-name]
   (let [data (io/read-edn store-name)
-        data (rename-in-edn data name new-name)
+        data (rename-in-edn data name ns new-name)
         [denormalized _] (d/denormalize-all data language-mappings)]
     (do
       (io/write-edn data store-name)
@@ -56,16 +57,17 @@
               [cmd & args] (clojure.string/split cmd #" ")]
           (cond
            (or  (= "h" cmd) (= "help" cmd))
-           (do (println "s - run a save-rewrite")
-               (println "r old new - rename a user-defined symbol from old to new")
+           (do (println "s (run a save-rewrite cycle)")
+               (println "r old ns new (rename a user-defined symbol from old in ns to new)")
                (recur 1))
            (or  (= "s" cmd) (= "save" cmd))
            (do (round-trip)
                (println "Written..")
                (recur 1))
-           (or (= "r" cmd) (= "rename" cmd))
+           (or (= "r" cmd) (= "rename fn ns new-fn" cmd))
            (do (rename-global-symbol (symbol (first args))
-                                     (symbol (second args)))
+                                     (symbol (second args))
+                                     (symbol (nth args 3)))
                (println "Written..")
                (recur 1))
            (= "q" cmd) nil

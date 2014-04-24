@@ -4,7 +4,8 @@ A Clojure library designed to ... well, that part is up to you.
 
 ## Usage
 
-FIXME
+Run the integration tests with
+lein test
 
 ## License
 

@@ -35,18 +35,18 @@
 (deftest normalize-test
   (testing "Denormalizing"
     (is (= (denorm sample-edn)
-           '[(ns test) (defn adder [x y] (+ x y)) (adder 1 2)]))
-    (is (= (denorm (rename-in-edn sample-edn 'adder 'adder2))
-           '[(ns test) (defn adder2 [x y] (+ x y)) (adder2 1 2)])))
+           '[(ns test) (defn adder [x y] (+ x y)) (adder 1 2)])))
   (testing "Round tripping"
     (is (= (round '[(ns test) (defn adder [x y] (+ x y)) (adder 1 2)])
            '[(ns test) (defn adder [x y] (+ x y)) (adder 1 2)]))
     (is (= (round '[(ns test.testns (:require [blah]))
-                    (defn adder2 [x y] (+ x y)) (adder2 1 2)] )
+                    (defn adder2 [x y] (+ x y)) (adder2 1 2)])
        '[(ns test.testns (:require [blah]))
          (defn adder2 [x y] (+ x y)) (adder2 1 2)])))
   (testing "Renaming"
-    (is (= (denorm (rename-in-edn sample-edn 'adder 'adder2))
+    (is (= (denorm (rename-in-edn sample-edn 'adder 'bad-ns 'adder2))
+           '[(ns test) (defn adder [x y] (+ x y)) (adder 1 2)]))
+    (is (= (denorm (rename-in-edn sample-edn 'adder 'test 'adder2))
            '[(ns test) (defn adder2 [x y] (+ x y)) (adder2 1 2)])))
   (testing "Normalizing"
     (is (= (with-redefs [gensym (fn [x] (symbol (str x "X")))]
